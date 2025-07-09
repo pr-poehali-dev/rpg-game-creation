@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,9 +24,36 @@ const Index = () => {
     business: 30,
     experience: 250,
     nextLevelExp: 500,
+    time: "14:30",
+    day: 1,
   });
 
   const [currentLocation, setCurrentLocation] = useState("home");
+  const [currentSubLocation, setCurrentSubLocation] = useState("");
+  const [isMoving, setIsMoving] = useState(false);
+  const [movingText, setMovingText] = useState("");
+
+  // Время передвижения для анимации
+  const moveToLocation = (
+    location: string,
+    subLocation: string = "",
+    walkTime: number = 2,
+  ) => {
+    setIsMoving(true);
+    setMovingText(`Идёшь... ${walkTime} мин`);
+
+    setTimeout(() => {
+      setCurrentLocation(location);
+      setCurrentSubLocation(subLocation);
+      setIsMoving(false);
+      setMovingText("");
+      // Обновляем время
+      const [hours, minutes] = playerStats.time.split(":").map(Number);
+      const newMinutes = minutes + walkTime;
+      const newTime = `${hours + Math.floor(newMinutes / 60)}:${(newMinutes % 60).toString().padStart(2, "0")}`;
+      setPlayerStats((prev) => ({ ...prev, time: newTime }));
+    }, walkTime * 500); // Реальное время анимации
+  };
 
   const locations = [
     {
@@ -58,6 +85,33 @@ const Index = () => {
       name: "Бизнес",
       icon: "TrendingUp",
       description: "Создай свой бизнес",
+    },
+  ];
+
+  const homeSubLocations = [
+    {
+      id: "corridor",
+      name: "Коридор",
+      description: "Входная зона дома",
+      image: "/img/57bdd7f7-bd08-4002-9f9c-d3e2c2b77ce7.jpg",
+    },
+    {
+      id: "kitchen",
+      name: "Кухня",
+      description: "Готовь и ешь",
+      image: "/img/69c8e4ab-e972-4a57-8842-5fba642643c3.jpg",
+    },
+    {
+      id: "bedroom",
+      name: "Спальня",
+      description: "Отдыхай и спи",
+      image: "/img/0532782f-80cd-4274-be6e-d3e57a6fece7.jpg",
+    },
+    {
+      id: "bathroom",
+      name: "Ванная",
+      description: "Умывайся и расслабляйся",
+      image: "/img/a4257fac-f0b3-4092-b600-003b9f83efc6.jpg",
     },
   ];
 
@@ -94,51 +148,243 @@ const Index = () => {
     }
   };
 
+  const renderHomeSubLocation = () => {
+    const currentSub = homeSubLocations.find(
+      (sub) => sub.id === currentSubLocation,
+    );
+
+    if (!currentSub) return null;
+
+    return (
+      <div className="space-y-6">
+        {/* Визуальная сцена */}
+        <div className="relative">
+          <img
+            src={currentSub.image}
+            alt={currentSub.name}
+            className="w-full h-64 object-cover rounded-lg shadow-lg"
+          />
+          <div className="absolute bottom-4 left-4 bg-black/50 text-white px-4 py-2 rounded-lg">
+            <h3 className="text-xl font-bold">{currentSub.name}</h3>
+            <p className="text-sm opacity-90">{currentSub.description}</p>
+          </div>
+        </div>
+
+        {/* Действия в зависимости от комнаты */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {currentSubLocation === "corridor" && (
+            <>
+              <Button
+                onClick={() => moveToLocation("street", "", 1)}
+                className="h-20 bg-anime-blue hover:bg-anime-blue/90 flex flex-col items-center justify-center"
+              >
+                <Icon name="DoorOpen" size={24} />
+                <span>Выйти на улицу</span>
+              </Button>
+              <Button
+                onClick={() => setCurrentSubLocation("kitchen")}
+                className="h-20 bg-anime-pink hover:bg-anime-pink/90 flex flex-col items-center justify-center"
+              >
+                <Icon name="ChefHat" size={24} />
+                <span>Пойти на кухню</span>
+              </Button>
+              <Button
+                onClick={() => setCurrentSubLocation("bedroom")}
+                className="h-20 bg-anime-yellow hover:bg-anime-yellow/90 flex flex-col items-center justify-center text-white"
+              >
+                <Icon name="Bed" size={24} />
+                <span>Пойти в спальню</span>
+              </Button>
+            </>
+          )}
+
+          {currentSubLocation === "kitchen" && (
+            <>
+              <Button
+                onClick={() => setCurrentSubLocation("corridor")}
+                className="h-20 bg-gray-500 hover:bg-gray-600 flex flex-col items-center justify-center"
+              >
+                <Icon name="ArrowLeft" size={24} />
+                <span>Назад в коридор</span>
+              </Button>
+              <Button
+                onClick={() =>
+                  setPlayerStats((prev) => ({
+                    ...prev,
+                    energy: Math.min(100, prev.energy + 30),
+                    happiness: Math.min(100, prev.happiness + 10),
+                  }))
+                }
+                className="h-20 bg-anime-pink hover:bg-anime-pink/90 flex flex-col items-center justify-center"
+              >
+                <Icon name="UtensilsCrossed" size={24} />
+                <span>Покушать (+30 энергии)</span>
+              </Button>
+              <Button
+                onClick={() =>
+                  setPlayerStats((prev) => ({
+                    ...prev,
+                    energy: Math.max(0, prev.energy - 10),
+                    happiness: Math.min(100, prev.happiness + 15),
+                  }))
+                }
+                className="h-20 bg-anime-blue hover:bg-anime-blue/90 flex flex-col items-center justify-center"
+              >
+                <Icon name="ChefHat" size={24} />
+                <span>Готовить (+15 счастья)</span>
+              </Button>
+            </>
+          )}
+
+          {currentSubLocation === "bedroom" && (
+            <>
+              <Button
+                onClick={() => setCurrentSubLocation("corridor")}
+                className="h-20 bg-gray-500 hover:bg-gray-600 flex flex-col items-center justify-center"
+              >
+                <Icon name="ArrowLeft" size={24} />
+                <span>Назад в коридор</span>
+              </Button>
+              <Button
+                onClick={() =>
+                  setPlayerStats((prev) => ({
+                    ...prev,
+                    energy: Math.min(100, prev.energy + 50),
+                    happiness: Math.min(100, prev.happiness + 20),
+                  }))
+                }
+                className="h-20 bg-anime-purple hover:bg-anime-purple/90 flex flex-col items-center justify-center"
+              >
+                <Icon name="Moon" size={24} />
+                <span>Спать (+50 энергии)</span>
+              </Button>
+              <Button
+                onClick={() =>
+                  setPlayerStats((prev) => ({
+                    ...prev,
+                    happiness: Math.min(100, prev.happiness + 25),
+                    charisma: prev.charisma + 1,
+                  }))
+                }
+                className="h-20 bg-anime-pink hover:bg-anime-pink/90 flex flex-col items-center justify-center"
+              >
+                <Icon name="Monitor" size={24} />
+                <span>Смотреть аниме (+25 счастья)</span>
+              </Button>
+            </>
+          )}
+
+          {currentSubLocation === "bathroom" && (
+            <>
+              <Button
+                onClick={() => setCurrentSubLocation("corridor")}
+                className="h-20 bg-gray-500 hover:bg-gray-600 flex flex-col items-center justify-center"
+              >
+                <Icon name="ArrowLeft" size={24} />
+                <span>Назад в коридор</span>
+              </Button>
+              <Button
+                onClick={() =>
+                  setPlayerStats((prev) => ({
+                    ...prev,
+                    energy: Math.min(100, prev.energy + 20),
+                    happiness: Math.min(100, prev.happiness + 30),
+                  }))
+                }
+                className="h-20 bg-anime-blue hover:bg-anime-blue/90 flex flex-col items-center justify-center"
+              >
+                <Icon name="Droplets" size={24} />
+                <span>Принять душ (+20 энергии)</span>
+              </Button>
+              <Button
+                onClick={() =>
+                  setPlayerStats((prev) => ({
+                    ...prev,
+                    charisma: prev.charisma + 3,
+                    happiness: Math.min(100, prev.happiness + 15),
+                  }))
+                }
+                className="h-20 bg-anime-pink hover:bg-anime-pink/90 flex flex-col items-center justify-center"
+              >
+                <Icon name="Sparkles" size={24} />
+                <span>Ухаживать за собой (+3 харизмы)</span>
+              </Button>
+            </>
+          )}
+        </div>
+
+        {/* Дополнительные комнаты */}
+        {currentSubLocation === "corridor" && (
+          <Card className="border-anime-purple/20 mt-4">
+            <CardHeader>
+              <CardTitle className="text-anime-purple">
+                Другие комнаты
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setCurrentSubLocation("bathroom")}
+                  variant="outline"
+                  className="border-anime-blue text-anime-blue hover:bg-anime-blue/10"
+                >
+                  <Icon name="Bath" size={16} className="mr-2" />
+                  Ванная
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
   const renderLocationContent = () => {
+    // Если дома и выбрана подлокация
+    if (currentLocation === "home" && currentSubLocation) {
+      return renderHomeSubLocation();
+    }
+
     switch (currentLocation) {
       case "home":
         return (
           <div className="space-y-4">
-            <h3 className="text-2xl font-bold text-anime-purple">🏠 Мой дом</h3>
+            <h3 className="text-2xl font-bold text-anime-purple">
+              🏠 Выбери комнату
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="border-anime-pink/20">
-                <CardHeader>
-                  <CardTitle className="text-anime-pink">Отдых</CardTitle>
-                  <CardDescription>Восстанови энергию</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() =>
-                      setPlayerStats((prev) => ({
-                        ...prev,
-                        energy: Math.min(100, prev.energy + 30),
-                      }))
-                    }
-                    className="w-full bg-anime-pink hover:bg-anime-pink/90"
-                  >
-                    Отдохнуть (+30 энергии)
-                  </Button>
-                </CardContent>
-              </Card>
-              <Card className="border-anime-blue/20">
-                <CardHeader>
-                  <CardTitle className="text-anime-blue">Развлечения</CardTitle>
-                  <CardDescription>Повысь настроение</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() =>
-                      setPlayerStats((prev) => ({
-                        ...prev,
-                        happiness: Math.min(100, prev.happiness + 20),
-                      }))
-                    }
-                    className="w-full bg-anime-blue hover:bg-anime-blue/90"
-                  >
-                    Посмотреть аниме (+20 счастья)
-                  </Button>
-                </CardContent>
-              </Card>
+              {homeSubLocations.map((subLocation) => (
+                <Card
+                  key={subLocation.id}
+                  className="border-anime-pink/20 hover:border-anime-pink/40 transition-all cursor-pointer"
+                >
+                  <div onClick={() => setCurrentSubLocation(subLocation.id)}>
+                    <div className="h-32 bg-gradient-to-br from-anime-pink/20 to-anime-blue/20 rounded-t-lg flex items-center justify-center">
+                      <Icon
+                        name={
+                          subLocation.id === "corridor"
+                            ? "Home"
+                            : subLocation.id === "kitchen"
+                              ? "ChefHat"
+                              : subLocation.id === "bedroom"
+                                ? "Bed"
+                                : "Bath"
+                        }
+                        size={48}
+                        className="text-anime-purple"
+                      />
+                    </div>
+                    <CardHeader>
+                      <CardTitle className="text-anime-purple">
+                        {subLocation.name}
+                      </CardTitle>
+                      <CardDescription>
+                        {subLocation.description}
+                      </CardDescription>
+                    </CardHeader>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
         );
@@ -314,6 +560,22 @@ const Index = () => {
     }
   };
 
+  if (isMoving) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-anime-pink/10 via-anime-blue/10 to-anime-yellow/10 flex items-center justify-center">
+        <Card className="bg-white/90 backdrop-blur-sm border-anime-purple/20 shadow-lg p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-anime-purple border-t-transparent mx-auto mb-4"></div>
+            <h2 className="text-2xl font-bold text-anime-purple mb-2">
+              {movingText}
+            </h2>
+            <p className="text-anime-purple/60">Перемещаюсь...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-anime-pink/10 via-anime-blue/10 to-anime-yellow/10">
       <div className="container mx-auto p-4">
@@ -341,6 +603,12 @@ const Index = () => {
                       className="bg-anime-yellow text-white"
                     >
                       Уровень {playerStats.level}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="border-anime-blue text-anime-blue"
+                    >
+                      {playerStats.time} | День {playerStats.day}
                     </Badge>
                   </div>
                   <div className="flex items-center space-x-4 text-lg">
@@ -406,7 +674,13 @@ const Index = () => {
                 variant={
                   currentLocation === location.id ? "default" : "outline"
                 }
-                onClick={() => setCurrentLocation(location.id)}
+                onClick={() =>
+                  moveToLocation(
+                    location.id,
+                    "",
+                    location.id === "home" ? 1 : 5,
+                  )
+                }
                 className={`flex items-center space-x-2 ${
                   currentLocation === location.id
                     ? "bg-anime-purple text-white"
